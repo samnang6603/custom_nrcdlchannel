@@ -1,0 +1,21 @@
+CDL Channel Coefficient Generation Procedure (TS 38-901)
+1. Configure antenna element pattern for Tx
+	1.1. Arrange antenna panel position and angular orientation
+	1.2. Arrange antenna element position and angular orientation
+	1.3. Make polarization model (Model-1 or Model-2)
+	1.4. Make antenna element power pattern as a function of polarization model
+2. Repeat step 1 for Rx (identical procedure)
+3. Configure delay profile
+	3.1. Use LUT for CDL-A/B/C/D/E for PDP values
+	3.2. Scale delays and K-factor for LoS component if PDP has LoS Cluster
+	3.3. Map PDP to AoD,AoA,ZoD,ZoA, path delays, path gains
+	3.4. Get CDL per cluster parameters (XPR, angle spread, number of strongest cluster) (table 7.7.1)
+4. Normalize channel outputs if necessary
+5. Generate initial phase
+6. Compute ray coupling
+	6.1. Use the fixed 20 rays/cluster and compute ZoD/ZoA and AoD/ZoD coupling
+	6.2. If PDP has LoS, skip the LoS path because there are no ray offset
+7. Get moving scatterer states and speeds caused by Doppler effect
+8. Compute static path gains 
+9. Compute time varying CDL channel
+10. Now that all components are realized TS 38-901 Eqn 7.6-35, we can finally implement that crazy sum formula
