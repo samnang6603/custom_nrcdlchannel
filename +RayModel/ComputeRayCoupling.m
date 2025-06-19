@@ -1,8 +1,9 @@
-function coupling = ComputeRayCoupling(cdl_struct,clusterTypes)
+function coupling = ComputeRayCoupling(cdl_struct,info_struct)
 %COMPUTERAYCOUPLING Calculate ray coupling according to TR 38.901 section
 %7.5 step 8
 
 randomStream = cdl_struct.RandomStreamObj;
+clusterTypes = info_struct.ClusterTypes;
 
 M = RayModel.GetNumberOfRays;
 L = length(clusterTypes);
@@ -60,7 +61,7 @@ end
 % 
 clusterTypeToAdjust = {'LOS';'SubclusteredNLOS';'NLOS'};
 for m = 1:length(clusterTypeToAdjust)
-    idx = strcmpi(clusterType,clusterTypeToAdjust{m});
+    idx = strcmpi(clusterTypes,clusterTypeToAdjust{m});
 
     % Total number of cluster of the same type;
     numClustersOfType = sum(idx); 

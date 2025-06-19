@@ -8,9 +8,16 @@ ant_struct = AntennaStructure.ConfigureStructure(cdl_struct);
 pdp_struct = PowerDelayProfile.CreatePowerDelayProfileStructure(cdl_struct);
 
 % Step 3 split LoS an NLoS cluster and sub-clustering
-[pdp_struct,infostruct] = PowerDelayProfile.GetLOSClusterInfo(pdp_struct);
+[pdp_struct,info_struct] = PowerDelayProfile.GetClusterInfo(pdp_struct);
 
-%iniphase_struct;
+% Step 4 generate initial phase
+[Phi,cdl_struct] = ChannelPhase.GenerateInitialPhases(cdl_struct,ant_struct,info_struct);
+
+% Step 5 compute ray coupling
+coupling = RayModel.ComputeRayCoupling(cdl_struct,info_struct);
+
+% Step 6 calcualte dual mobility scatterer variables
+[alpha,D] = DualMobility.ComputeDualMobilityScattererVariables(cdl_struct,pdp_struct,info_struct);
 
 
 mdl_out = 0;
