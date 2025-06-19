@@ -1,7 +1,7 @@
-function per_cluster = GetPerClusterParam(cdl)
+function per_cluster = GetPerClusterParam(cdl_struct)
 % GETPERCLUSTERPARAM
 % TR 38.901 Section 7.7.1 under each CDL table
-switch upper(cdl.DelayProfile)
+switch upper(cdl_struct.DelayProfile)
     case 'CDL-A'
         [C_ASD,C_ASA,C_ZSD,C_ZSA,XPR] = deal(5, 11, 3, 3, 10);
     case 'CDL-B'

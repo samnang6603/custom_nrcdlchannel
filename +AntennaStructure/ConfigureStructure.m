@@ -1,10 +1,10 @@
-function antstruct = ConfigureStructure(cdl)
+function ant_struct = ConfigureStructure(cdl_struct)
 
-TransmitAntennaArray = cdl.TransmitAntennaArray;
-ReceiveAntennaArray = cdl.ReceiveAntennaArray;
-TransmitArrayOrientation = cdl.TransmitArrayOrientation;
-ReceiveArrayOrientation = cdl.ReceiveArrayOrientation;
-CarrierFrequency = cdl.CarrierFrequency;
+TransmitAntennaArray = cdl_struct.TransmitAntennaArray;
+ReceiveAntennaArray = cdl_struct.ReceiveAntennaArray;
+TransmitArrayOrientation = cdl_struct.TransmitArrayOrientation;
+ReceiveArrayOrientation = cdl_struct.ReceiveArrayOrientation;
+CarrierFrequency = cdl_struct.CarrierFrequency;
 
 mdlArrays = AntennaStructure.ArrangeAntennaStructure(...
     TransmitAntennaArray,...
@@ -13,5 +13,5 @@ mdlArrays = AntennaStructure.ArrangeAntennaStructure(...
     ReceiveArrayOrientation,...
     CarrierFrequency);
 
-antstruct = mdlArrays;
+ant_struct = mdlArrays;
 end

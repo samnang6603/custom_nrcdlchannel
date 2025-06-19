@@ -42,8 +42,9 @@ switch lower(polmode)
 
         % Equation 7.3-3 evaluated assuming F_phi_pp = 0
         %{
-            [F_theta_p]  =  [cos(phi) -sin(phi)][F_theta_pp]
-            [F_phi_p  ]     [sin(phi)  cos(phi)][F_phi_pp]
+            [F_theta_p]     [cos(phi) -sin(phi)] [F_theta_pp]
+            |         |  =  |                  |*|          |
+            [ F_phi_p ]     [sin(phi)  cos(phi)] [ F_phi_pp ]
         %}
         F = [F_theta_pp.*cosPsi; F_theta_pp.*sinPsi];
 
