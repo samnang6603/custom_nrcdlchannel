@@ -45,13 +45,13 @@ if strcmpi(cdl_struct.RayCoupling,'Random')
     % partial directional consistency by sorting ZoD -> ZoA mappings.
     coupling = zeros(coupling_size);
 
-    % copy only AoA->AoD & AoD->ZoD coupling
+    % copy only AoD->AoA & AoD->ZoD coupling
     coupling(:,:,[1 3]) = couplingTmp(:,:,[1 3]);
     for m = 1:L % for all cluster
-        % Here sort the AoA->ZoD in ascending order and get only the index
+        % Here sort the AoD->ZoD in ascending order and get only the index
         [~,sortIdx] = sort(couplingTmp(m,:,3)); 
 
-        % Map the sort index to rearrange AoA->ZoA according to AoA->ZoD
+        % Map the sorted index to rearrange AoD->ZoA according to AoD->ZoD
         coupling(m,:,2) = couplingTmp(m,sortIdx,2); 
     end
 
