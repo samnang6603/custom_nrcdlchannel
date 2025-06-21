@@ -1,6 +1,6 @@
-function Y = TransformVectorLCS2GCS(orientation)
-% TRANSFORMVECTORLCS2GCS  Transform vector from Local to Global Coordinate 
-% System (LCS → GCS)
+function R = LCS2GCSRotationMatrix(orientation)
+%LCS2GCSRotationMatrix Compute matrix that transforms vector from Local to 
+% Global Coordinate System (LCS → GCS)
 % Based on 3GPP TR 38.901 Section 7.1.3 and TR 36.873 Section 5.1.3
 %
 % INPUT:
@@ -39,14 +39,14 @@ sa = s(1);
 sb = s(2); 
 sg = s(3);
 
-Y = zeros(3);
-Y(1,1) = ca.*cb;
-Y(1,2) = ca*sb*sg - sa*cg;
-Y(1,3) = ca*sb*cg + sa*sg;
-Y(2,1) = sa*cb;
-Y(2,2) = sa*sb*sg + ca*cg;
-Y(2,3) = sa*sb*cg - ca*sg;
-Y(3,1) = -sb;
-Y(3,2) = cb*sg;
-Y(3,3) = cb*cg;
+R = zeros(3);
+R(1,1) = ca.*cb;
+R(1,2) = ca*sb*sg - sa*cg;
+R(1,3) = ca*sb*cg + sa*sg;
+R(2,1) = sa*cb;
+R(2,2) = sa*sb*sg + ca*cg;
+R(2,3) = sa*sb*cg - ca*sg;
+R(3,1) = -sb;
+R(3,2) = cb*sg;
+R(3,3) = cb*cg;
 end

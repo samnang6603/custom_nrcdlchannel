@@ -11,7 +11,7 @@ function F = ComputePolarization(polmode,powpattern_fcn_handle,powmode,theta_p,p
 %        - phi_p: Azimuth angle
 %        - zeta: Polarization angles
 % Output:
-%        - F: Field pattern of element
+%        - F: Field pattern of element in LCS
 switch lower(polmode)
     case 'model-1'
 
@@ -58,6 +58,7 @@ switch lower(polmode)
         F_phi_p = sqrtA_p*sind(zeta);
 
         % Now combine
-        F = [F_theta_p; F_phi_p];
+        F = [F_theta_p 
+             F_phi_p];
 
 end

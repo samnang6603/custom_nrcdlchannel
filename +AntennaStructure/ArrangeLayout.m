@@ -77,12 +77,12 @@ yz2xy_rot = [0 0 1; 0 1 0; -1 0 0];  % Rotation from local-x to global-z
 % Build the orientation matrix from Euler angles
 % Uses TR 38.901 composite rotation matrix R = Rz(bearing)*Ry(downtilt)*Rx(slant)
 % Converts the LCS into GCS using active rotation.
-vect_gcs = AntennaStructure.TransformVectorLCS2GCS(ant_layout.Orientation);  % 3x3 orientation matrix
+Rgcs = AntennaStructure.LCS2GCSRotationMatrix(ant_layout.Orientation);  % 3x3 orientation matrix
 
 % Combine reorientation and orientation matrix
 % First rotate from local-x to global-z (yz2xy_rot)
 % Then rotate according to the array's orientation in the scenario
-vect_gcs_zbroadside = vect_gcs*yz2xy_rot;  % Final LCS → GCS mapping
+vect_gcs_zbroadside = Rgcs*yz2xy_rot;  % Final LCS → GCS mapping
 
 % Apply the transformation to all stacked element positions
 % Reshape the 6D tensor [3 x M x N x P x Mg x Ng] into a 2D matrix [3 x total_elements]
