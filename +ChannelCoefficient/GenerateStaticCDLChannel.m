@@ -7,7 +7,7 @@ R = ant_struct.NumOutputSignals; % Num Rx
 
 clusterTypes = info_struct.ClusterTypes;
 
-input_size = [1 P]; % just expand dimensionality for later, that's all
+%input_size = [1 P]; % just expand dimensionality for later, that's all
 M = RayModel.GetNumberOfRays;
 T = 1; % 1 time-domain channel sample
 D = [T 1 M P R];
@@ -19,16 +19,58 @@ XPR = repmat(xprtmp,L,M); % expand into XPR Map
 
 
 [HLOS,rhatTxLOS,rhatRxLOS] = computeClusterGains( ...
-    cdl_struct,pdp_struct,ant_struct,input_size,...
+    cdl_struct,pdp_struct,ant_struct,...
     coupling,XPR,Phi,D,clusterTypes,'LOS');
 
-static_struct = 0;
+% Subcluster to be implemented later
+%[HNLOSubcluster,rhatTxSubcluster,rhatRxSubcluster]
+
+[HNLOS,rhatTxNLOS,rhatRxNLOS] = computeClusterGains( ...
+    cdl_struct,pdp_struct,ant_struct,...
+    coupling,XPR,Phi,D,clusterTypes,'NLOS');
+
+% Gather all channel matrices and unit vectors
+LOSIdx = strcmpi(clusterTypes,'LOS');
+% Subcluster to be implemented later
+NLOSIdx = strcmpi(clusterTypes,'NLOS');
+
+% Static channel matrices
+pathGains = zeros(1,L,M,P,R,'like',1i);
+pathGains(:,LOSIdx,:,:,:) = HLOS;
+pathGains(:,NLOSIdx,:,:,:) = HNLOS;
+
+% Departure ray's spherical unit vector
+txSphericalUnitVectors = zeros(3,L,M);
+txSphericalUnitVectors(:,LOSIdx,:) = rhatTxLOS;
+txSphericalUnitVectors(:,NLOSIdx,:) = rhatTxNLOS;
+
+% Arrival ray's spherical unit vector
+rxSphericalUnitVectors = zeros(3,L,M);
+rxSphericalUnitVectors(:,LOSIdx,:) = rhatRxLOS;
+rxSphericalUnitVectors(:,NLOSIdx,:) = rhatRxNLOS;
+
+%  Normalizations
+if cdl_struct.NormalizeChannelOutputs
+    pathGains = pathGains/sqrt(size(pathGains,5));
+end
+
+if cdl_struct.NormalizePathGains
+    powIdx = 2;
+    % cluster powers in TR 38.901, AKA average path gains
+    avgPathGains = sum(10.^(pdp_struct.PDPTable(:,powIdx)/10)); 
+    pathGains = pathGains/sqrt(avgPathGains);
+end
+
+static_struct = struct();
+static_struct.StaticPathGains = pathGains;
+static_struct.txSphericalUnitVectors = txSphericalUnitVectors;
+static_struct.rxSphericalUnitVectors = rxSphericalUnitVectors;
 
 end
 
 function [Hstatic,rhat_tx,rhat_rx] = computeClusterGains( ...
-    cdl_struct,pdp_struct,ant_struct,input_size,...
-    coupling,XPR,Phi,D,allClusterTypes,thisClusterType)
+    cdl_struct,pdp_struct,ant_struct,coupling,XPR,Phi,D,...
+    allClusterTypes,thisClusterType)
 
 c0 = 299792458;
 
@@ -37,7 +79,7 @@ pdp = pdp_struct.PDPTable;
 thisClusterIdx = strcmpi(allClusterTypes,thisClusterType);
 pdpthisCluster = pdp(thisClusterIdx,:);
 
-% get number of clusters and set up corresponding dim of Hstatic
+% get number of this clusters and set up corresponding dim of Hstatic
 N = size(pdpthisCluster,1);
 D(2) = N;
 
@@ -75,7 +117,6 @@ C_ZSA = AngleSpreads(4);
 coupling = coupling(thisClusterIdx,:,:);
 
 % Get XPR associated with this cluster type
-xprtmp = XPR;
 XPR = XPR(thisClusterIdx,:,:);
 
 % Get Phi matrix associated with this cluster type
@@ -196,7 +237,75 @@ for u = 1:U
 end
 % End Processing for Tx ---------------------------------------------------
 
-l = 1;
+% Calculate polarization term
+polTerm = calculatePolarizationMatrix(Phi,XPR,thisClusterType);
+
+% Get active ray(s) in this clusterr
+R = findActiveRays(Phi);
+
+% for each Tx
+for s = 1:S
+
+    % for each Rx
+    for u = 1:U
+
+        % Calculate the MONSTROUS Equation 7.5-28 excluding Doppler (the
+        % last term). Doppler is to be calculated in
+        % GenerateTimeVaryingCDLChannel()
+        % First, compute all the field terms combined. In 7.5-28, all the 
+        % field terms are combined as below:
+        %{ 
+            (thth): theta-theta, (thph): theta-phi
+            ksqrinv: 1/sqrt(kappa)
+
+fieldTerms =
+         T
+[F_rx_th]   [exp(jPhi_thth)          ksqrinv*exp(jPhi_thph]   [F_tx_th]
+|       | * |                                             | * |       |
+[F_rx_ph]   [ksqrinv*exp(jPhi_phth)         exp(jPhi_phph)]   [F_rx_ph]
+             
+        %}
+        % This implmentation doesn't
+        % include matrix multiplication as in 7.5-28 but an expanded
+        % vectorized version for optimization.
+        fieldTerms = (rxFieldTerm(1,:,u).*polTerm(1,:) + rxFieldTerm(2,:,u).*polTerm(2,:)).*txFieldTerm(1,:,s) +...
+                     (rxFieldTerm(1,:,u).*polTerm(3,:) + rxFieldTerm(2,:,u).*polTerm(4,:)).*txFieldTerm(2,:,s);
+        fieldTerms = fieldTerms(:); % collapse
+
+        % The, compute all the location terms combined. In 7.5-28, all the 
+        % location terms are combined as below (excluding Doppler term)
+        %{
+                           T                         T
+                    /     r_rx*dbar_rx \      /     r_tx*dbar_tx \    
+                 exp|j2pi--------------| * exp|j2pi--------------|
+                    \       lambda_0   /      \       lambda_0   / 
+    
+        %}
+        locationTerms = rxLocationTerm(:,u).*txLocationTerm(:,s);
+
+        % Now multiply fieldTerms and locationTerms
+        allTerms = fieldTerms.*locationTerms;
+
+        % Force zero to indices that correspond to unused rays for the
+        % current set of clusters
+        allTerms(R(:)==0) = 0;
+
+        % Hstatic
+        Hstatic(1,:,:,s,u) = reshape(allTerms,N,M);
+
+    end
+
+end
+
+% Number of active rays for each cluster, |R_i|
+modR_i = sum(R,2).';
+
+% The scaling factor here is the sqrt(P/M) where M is the number of active
+% ray per cluster
+scaling = sqrt(P./modR_i);
+
+% Now scale Hstatic
+Hstatic = scaling.*Hstatic;
 
 end
 
@@ -232,15 +341,15 @@ where:
 % Rx. The only variables that change are theta and phi for arrival and
 % departure
 
-% permute from (L,M) (virtually (L,M,Page|Page = 1) to rearrange to 
+% permute from (L,M) (virtually (L,M,Page|Page = 1) to rearrange to
 % (Page|Page = 1,L,M) to be concatenated at the end
-phi = permute(phi,[3, 1, 2]);  
+phi = permute(phi,[3, 1, 2]);
 theta = permute(theta,[3, 1, 2]);
 
 sintheta = sind(theta); % so it's reusable, for optimization
 rhat = [sintheta.*cosd(phi)
-        sintheta.*sind(phi)
-            cosd(theta)    ];
+    sintheta.*sind(phi)
+    cosd(theta)    ];
 
 end
 
@@ -248,4 +357,78 @@ function locTerm = getLocationTerm(rhat,dbar,lambda_0,antIdx)
 % reshape rhat to combine cluster and ray dimensions into a single row
 rhat = reshape(rhat,[3 numel(rhat)/3]);
 locTerm = exp(1i*2*pi*rhat.'*dbar(:,antIdx)/lambda_0);
+end
+
+function polmat = calculatePolarizationMatrix(Phi,XPR,clusterType)
+switch clusterType
+    case 'LOS'
+        % Easy one line, LOS is not complicated
+        polmat = [1; 0; 0; -1].*exp(1i*Phi(:,:,1));
+    case 'NLOS'
+        % Reshape Phi to combine cluster and ray dims into a single
+        % row
+        % First bring the polarization dim to first dim 3D-"Transpose"
+        tmp = permute(Phi,[3 1 2]);
+
+        % Then reshape to concatenate everything in 1st dim
+        Phi = reshape(tmp,[4 numel(Phi)/4]);
+
+        % Compute kappa: the cross-polarization power ratio (XPR), given in dB.
+        % XPR is defined as the ratio of power in co-polarization (theta-theta or phi-phi)
+        % to cross-polarization (theta-phi or phi-theta). See TR 38.901 Eq 7.5-21.
+        kappa = 10.^(XPR/10);
+
+        % Reshape and permute so that kappa is a 1×N vector (flattened ray dimension),
+        % matching how Phi is arranged (basically [numCluster×numRays]=N).
+        % This aligns dimensions for vectorized element-wise multiplication later.
+        tmp = permute(kappa,[3 1 2]);
+        kappa = reshape(tmp,[1 numel(kappa)]);
+
+        % Calculate complex exponentials of initial phases.
+        % Phi is expected to be 4×N (for theta-theta, theta-phi, phi-theta, phi-phi).
+        expPhi = exp(1i*Phi);  % This is already in the j-omega jungle.
+
+        % For polarization matrix, we apply per-ray scaling based on kappa.
+        % See Eq 7.5-22 — except we now vectorize the matrix form into columns for faster sim.
+
+        % Define scalar scaling factors for each matrix element.
+        % tmp12 and tmp21 are the inverse sqrt(kappa) terms, used for cross-polarized components.
+        tmp11 = ones(size(kappa));           % theta-theta and phi-phi use 1
+        tmp12 = 1./sqrt(kappa);            % theta-phi (tmp21) and phi-theta (tmp12) are scaled down
+        tmp21 = tmp12;                       % symmetric cross-polar terms
+        tmp22 = tmp11;                       % again, co-polar
+
+        % Construct the polarization matrix terms, one column per ray:
+        % Order is critical! MATLAB reshapes Phi in row-major order, done
+        % in the GenerateInitialPhase() function, while 3GPP's definition 
+        % is effectively column-major (see 7.5-22). So:
+        %   Phi(1,:) = theta-theta
+        %   Phi(2,:) = phi-theta  <-- swapped from intuition
+        %   Phi(3,:) = theta-phi  <-- this is also out-of-order
+        %   Phi(4,:) = phi-phi
+        %
+        % This is what happens when standards and MATLAB memory layouts 
+        % have a turf war.
+        %
+        P1 = tmp11.*expPhi(1,:);   % theta-theta
+        P2 = tmp21.*expPhi(3,:);   % theta-phi — careful! index 3 due to weird reshape ordering
+        P3 = tmp12.*expPhi(2,:);   % phi-theta — index 2 despite sounding like 3
+        P4 = tmp22.*expPhi(4,:);   % phi-phi
+
+        % Stack columns to form a 4×N polarization matrix
+        % (where each column is a ray's 2x2 matrix in column-major order):
+        % [P1; P2; P3; P4] means:
+        % [ theta-theta ;
+        %   theta-phi ;
+        %   phi-theta ;
+        %   phi-phi ] per ray.
+        polmat = [P1; P2; P3; P4];
+end
+
+end
+
+function R = findActiveRays(Phi)
+[N,M,~] = size(Phi);
+R = ones(N,M);
+R(Phi(:,:,1)==-Inf) = 0;
 end
