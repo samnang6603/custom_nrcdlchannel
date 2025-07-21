@@ -1,4 +1,4 @@
-function mdl_struct = CreatePowerDelayProfileStructure(cdl_struct)
+function pdp_struct = CreatePowerDelayProfileStructure(cdl_struct)
 % CREATEPOWERDELAYPROFILESTRUCTURE Extract PDP and scaled with some
 % parameters, then extract per cluster parameter.
 %
@@ -12,16 +12,16 @@ pdp_table = PowerDelayProfile.GetDelayProfileTable(delayProfile);
 
 % For CDL-D, CDL-E, has LOS
 desiredKFactor = NaN;
-hasLOS = PowerDelayProfile.CheckForLoS(cdl_struct);
+hasLOS = PowerDelayProfile.CheckForLOS(cdl_struct);
 if hasLOS
-    mdl_struct.HasLoSCluster = true;
+    pdp_struct.HasLOSCluster = true;
 
     % If manually change K Factor value
     if cdl_struct.KFactorScaling 
         desiredKFactor = cdl_struct.KFactor;
     end
 else
-    mdl_struct.HasLoSCluster = false;
+    pdp_struct.HasLOSCluster = false;
 end
 
 % Scale target K-Factor and delay spread 
@@ -34,39 +34,39 @@ pdp_table_out = PowerDelayProfile.ScaleDelaysKFactor(pdp_table,desiredKFactor,de
 % Cluster # | Normalized Delay | Power | AoD | AoA | ZoD | ZoA 
 % 
 % For CDL-D/E, the Specular(LoS) component is in cluster row #1
-mdl_struct.PathDelays = pdp_table_out(:,1).';
-mdl_struct.AveragePathGains = pdp_table_out(:,2).';
-mdl_struct.AnglesAoD = pdp_table_out(:,3).';
-mdl_struct.AnglesAoA = pdp_table_out(:,4).';
-mdl_struct.AnglesZoD = pdp_table_out(:,5).';
-mdl_struct.AnglesZoA = pdp_table_out(:,6).';
+pdp_struct.PathDelays = pdp_table_out(:,1).';
+pdp_struct.AveragePathGains = pdp_table_out(:,2).';
+pdp_struct.AnglesAoD = pdp_table_out(:,3).';
+pdp_struct.AnglesAoA = pdp_table_out(:,4).';
+pdp_struct.AnglesZoD = pdp_table_out(:,5).';
+pdp_struct.AnglesZoA = pdp_table_out(:,6).';
 
 % Overall table for completeness
-mdl_struct.PDPTable = pdp_table_out;
+pdp_struct.PDPTable = pdp_table_out;
 
 % Assign other info to output struct
-mdl_struct.NormalizedPathGains = cdl_struct.NormalizePathGains;
-mdl_struct.DelaySpread = delaySpread;
-mdl_struct.DelayProfile = delayProfile;
+pdp_struct.NormalizedPathGains = cdl_struct.NormalizePathGains;
+pdp_struct.DelaySpread = delaySpread;
+pdp_struct.DelayProfile = delayProfile;
 
 % Angles Scaling
-mdl_struct.AngleScaling = cdl_struct.AngleScaling;
-if (mdl_struct.AngleScaling)
+pdp_struct.AngleScaling = cdl_struct.AngleScaling;
+if (pdp_struct.AngleScaling)
     MeanAngles = cdl_struct.MeanAngles;
-    mdl_struct.TargetMeanAoD = MeanAngles(1);
-    mdl_struct.TargetMeanAoA = MeanAngles(2);
-    mdl_struct.TargetMeanZoD = MeanAngles(3);
-    mdl_struct.TargetMeanZoA = MeanAngles(4);
+    pdp_struct.TargetMeanAoD = MeanAngles(1);
+    pdp_struct.TargetMeanAoA = MeanAngles(2);
+    pdp_struct.TargetMeanZoD = MeanAngles(3);
+    pdp_struct.TargetMeanZoA = MeanAngles(4);
 end
 
 % Get per cluster parameter and assign to output struct
 per_cluster = PowerDelayProfile.GetPerClusterParam(cdl_struct);
-mdl_struct.XPR = per_cluster.XPR;
-mdl_struct.AngleSpreads = [per_cluster.C_ASD,... 
+pdp_struct.XPR = per_cluster.XPR;
+pdp_struct.AngleSpreads = [per_cluster.C_ASD,... 
                           per_cluster.C_ASA,...
                           per_cluster.C_ZSD,... 
                           per_cluster.C_ZSA];
-mdl_struct.NumStrongestCluster = 0;
+pdp_struct.NumStrongestCluster = 0;
 
 
 end

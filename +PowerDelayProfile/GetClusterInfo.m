@@ -1,7 +1,6 @@
 function [pdp_struct,infostruct] = GetClusterInfo(pdp_struct)
 % Get LOS, NLOS and NLOS Subcluster informations
 
-
 [LOS_pdp,K_dB] = getLOSClusterPathGains(pdp_struct);
 NLOS_pdp = getNLOSClusterPathGains(pdp_struct);
 NLOS_split_pdp = [];
@@ -40,7 +39,7 @@ pdptmp = pdp_struct.PDPTable;
 powIdx = 2;
 
 % Check for available LoS
-LOS = pdp_struct.HasLoSCluster;
+LOS = pdp_struct.HasLOSCluster;
 if LOS
     K_dB = pdptmp(1,powIdx) - pdptmp(2,powIdx);
 else
@@ -55,11 +54,11 @@ function NLOS_pdp = getNLOSClusterPathGains(pdp_struct)
 
 % Get pdp table
 pdptmp = pdp_struct.PDPTable;
-powIdx = 2;
+LOS = pdp_struct.HasLOSCluster;
+NLOS_pdp = pdptmp(1+LOS:end,:);
 
 % To be completed later, need number of strongest cluster
 
-NLOS_pdp = pdptmp(2:end,:);
 end
 
 function NLOS_split_pow = getSplitNLOSClusterPathGains(pdp_struct)

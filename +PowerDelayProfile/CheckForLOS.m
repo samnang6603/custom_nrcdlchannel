@@ -1,4 +1,4 @@
-function hasLoS = CheckForLoS(cdl)
+function hasLoS = CheckForLOS(cdl)
 % CHECKFORLOS Check for LoS or Specular component
 switch upper(cdl.DelayProfile)
     case {'CDL-A','CDL-B','CDL-C','TDL-A','TDL-B','TDL-C','NTN-TDL-A','NTN-TDL-B','NTN-TDLA100'}

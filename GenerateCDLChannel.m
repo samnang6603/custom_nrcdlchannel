@@ -1,4 +1,4 @@
-function mdl_out = GenerateCDLChannel(cdl_struct)
+function [H,sampleTimes] = GenerateCDLChannel(cdl_struct)
 % Generate NR CDL Channel, 
 % inspired by MATLAB nrCDLChannel()
 
@@ -19,12 +19,15 @@ pdp_struct = PowerDelayProfile.CreatePowerDelayProfileStructure(cdl_struct);
 coupling = RayModel.ComputeRayCoupling(cdl_struct,info_struct);
 
 % Step 6: calcualte dual mobility scatterer variables
-[alpha,D] = DualMobility.ComputeDualMobilityScattererVariables( ...
-    cdl_struct,pdp_struct,info_struct);
+[scattererStates,scattererSpeeds] = DualMobility.ComputeDualMobilityScattererVariables( ...
+    cdl_struct,info_struct);
 
 % Step 7: generate static CDL Channel
 static_struct = ChannelCoefficient.GenerateStaticCDLChannel( ...
     cdl_struct,pdp_struct,ant_struct,info_struct,coupling,Phi);
 
-mdl_out = 0;
+% Step 8: generate time varying CDL Channel
+[H,sampleTimes] = ChannelCoefficient.GenerateTimeVaryingCDLChannel(cdl_struct,...
+    ant_struct,static_struct,scattererStates,scattererSpeeds);
+
 end

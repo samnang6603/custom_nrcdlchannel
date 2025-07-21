@@ -5,7 +5,7 @@ switch upper(cdl_struct.DelayProfile)
     case 'CDL-A'
         [C_ASD,C_ASA,C_ZSD,C_ZSA,XPR] = deal(5, 11, 3, 3, 10);
     case 'CDL-B'
-        [C_ASD,C_ASA,C_ZSD,C_ZSA,XPR] = deal(10, 22, 3, 7, 10);
+        [C_ASD,C_ASA,C_ZSD,C_ZSA,XPR] = deal(10, 22, 3, 7, 8);
     case 'CDL-C'
         [C_ASD,C_ASA,C_ZSD,C_ZSA,XPR] = deal(2, 15, 3, 7, 7);
     case 'CDL-D'

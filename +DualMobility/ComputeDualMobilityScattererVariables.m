@@ -1,4 +1,4 @@
-function [alpha,D] = ComputeDualMobilityScattererVariables(cdl_struct,pdp_struct,info_struct)
+function [scattererStates,scattererSpeeds] = ComputeDualMobilityScattererVariables(cdl_struct,info_struct)
 %COMPUTEDUALMOBILITYSCATTERERVARIABLES Get moving scatterer variables
 
 clusterTypes = info_struct.ClusterTypes;
@@ -42,14 +42,14 @@ else
 end
 
 % Find out how many moving scatterers
-alpha = double(randAlpha < p);
+scattererStates = double(randAlpha < p);
 
 % For LOS cluster, there is no moving scatterers
-alpha(LOS,:) = 0;
+scattererStates(LOS,:) = 0;
 
 % Generate RV D (size [N M]) between -v_scatt to v_scatt
 % randD is (0,1) so (0,1)*2-1 = (-1,1). (-1,1)*v_scatt = (-v_scatt,v_scatt)
-D = (randD*2 - 1)*v_scatt;
+scattererSpeeds = (randD*2 - 1)*v_scatt;
 
 % To be implemented later, available subcluster scenario
 

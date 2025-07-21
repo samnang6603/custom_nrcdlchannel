@@ -83,6 +83,11 @@ pdpthisCluster = pdp(thisClusterIdx,:);
 N = size(pdpthisCluster,1);
 D(2) = N;
 
+% Initialize channel matrix and spherical unit vector rhat
+Hstatic = zeros(D,like=1i);
+rhat_tx = zeros([3 D(2:3)]);
+rhat_rx = zeros([3 D(2:3)]);
+
 % if no active cluster for this cluster type then return
 if ~N
     return;
@@ -96,11 +101,6 @@ end
 M = D(3); 
 S = D(4); % Total number of Tx
 U = D(5); % Total number of Rx
-
-% Initialize channel matrix and spherical unit vector rhat
-Hstatic = zeros(D,'like',1i);
-% rhat_tx = zeros([3 D(2:3)]);
-% rhat_rx = zeros([3 D(2:3)]);
 
 % Convert cluster power to linear
 P = 10.^(pdpthisCluster(:,powerIdx).'/10);
@@ -179,7 +179,7 @@ lambda_0 = c0/cdl_struct.CarrierFrequency;
 txArray_struct = ant_struct.TransmitAntennaArray;
 
 % Get the spherical unit vectors of departure for each cluster & ray 
-rhat_tx = getSphericalUnitVector(phi_AoD,theta_ZoD);
+rhat_tx = AntennaStructure.GetSphericalUnitVector(phi_AoD,theta_ZoD);
 
 % Get transmit antenna/subarray location vector
 if isempty(txArray_struct.SubarrayPositions)
@@ -206,12 +206,12 @@ for s = 1:S
 end
 % End Processing for Tx ---------------------------------------------------
 
-% Processing for Rx ------------------------------------------------------
+% Processing for Rx -------------------------------------------------------
 % Get Rx array struct
 rxArray_struct = ant_struct.ReceiveAntennaArray;
 
 % Get the spherical unit vectors of departure for each cluster & ray 
-rhat_rx = getSphericalUnitVector(phi_AoA,theta_ZoA);
+rhat_rx = AntennaStructure.GetSphericalUnitVector(phi_AoA,theta_ZoA);
 
 % Get transmit antenna/subarray location vector
 if isempty(rxArray_struct.SubarrayPositions)
@@ -312,45 +312,6 @@ end
 function theta = wrapZenithAngles(theta)
 theta = mod(theta,360);
 theta(theta>180) = 360 - theta(theta>180);
-end
-
-function rhat = getSphericalUnitVector(phi,theta)
-% Get rhat
-% See Equation 7.5-23 and -24
-%{
-For RX, the spherical unit of arrival
-
-                [sin(theta_(n,m,ZoA))*cos(phi_(n,m,AoA))]
-rhat_(rx,n,m) = |sin(theta_(n,m,ZoA))*sin(phi_(n,m,AoA))|
-                [          cos(theta_(n,m,ZoA))         ]
-
-Similarly, for departure
-
-                [sin(theta_(n,m,ZoD))*cos(phi_(n,m,AoD))]
-rhat_(tx,n,m) = |sin(theta_(n,m,ZoD))*sin(phi_(n,m,AoD))|
-                [          cos(theta_(n,m,ZoD))         ]
-
-where:
- - n is the index of the cluster
- - m is the index of the ray
- - N is the total number of cluster (L in this codebase)
- - M is the total number of ray (M in this codebase)
-
-%}
-% We can generalize this vector without creating separate ones for Tx and
-% Rx. The only variables that change are theta and phi for arrival and
-% departure
-
-% permute from (L,M) (virtually (L,M,Page|Page = 1) to rearrange to
-% (Page|Page = 1,L,M) to be concatenated at the end
-phi = permute(phi,[3, 1, 2]);
-theta = permute(theta,[3, 1, 2]);
-
-sintheta = sind(theta); % so it's reusable, for optimization
-rhat = [sintheta.*cosd(phi)
-    sintheta.*sind(phi)
-    cosd(theta)    ];
-
 end
 
 function locTerm = getLocationTerm(rhat,dbar,lambda_0,antIdx)
