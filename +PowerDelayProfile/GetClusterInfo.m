@@ -23,9 +23,9 @@ infostruct.K_dB = K_dB;
 infostruct.NLOS_pdp = NLOS_pdp;
 infostruct.ClusterTypes = clusterTypes;
 
-% Update info structure on angle spreads and XPR
-infostruct.XPR = pdp_struct.XPR;
-infostruct.AngleSpreads = pdp_struct.AngleSpreads;
+% % Update info structure on angle spreads and XPR
+% infostruct.XPR = pdp_struct.XPR;
+% infostruct.AngleSpreads = pdp_struct.AngleSpreads;
 
 
 end

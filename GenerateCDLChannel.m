@@ -1,4 +1,4 @@
-function [H,sampleTimes] = GenerateCDLChannel(cdl_struct)
+function [H,sampleTimes,cdl_struct] = GenerateCDLChannel(cdl_struct)
 % Generate NR CDL Channel, 
 % inspired by MATLAB nrCDLChannel()
 
@@ -7,9 +7,11 @@ ant_struct = AntennaStructure.ConfigureStructure(cdl_struct);
 
 % Step 2: configure delay profile
 pdp_struct = PowerDelayProfile.CreatePowerDelayProfileStructure(cdl_struct);
+cdl_struct.PDP = pdp_struct;
 
 % Step 3: split LOS an NLOS cluster and sub-clustering
 [pdp_struct,info_struct] = PowerDelayProfile.GetClusterInfo(pdp_struct);
+cdl_struct.PDPInfo = info_struct;
 
 % Step 4: generate initial phase
 [Phi,cdl_struct] = ChannelPhase.GenerateInitialPhases( ...
