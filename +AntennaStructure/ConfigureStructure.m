@@ -1,4 +1,4 @@
-function ant_struct = ConfigureStructure(cdl_struct)
+function [cdl_struct,ant_struct] = ConfigureStructure(cdl_struct)
 
 TransmitAntennaArray = cdl_struct.TransmitAntennaArray;
 ReceiveAntennaArray = cdl_struct.ReceiveAntennaArray;
@@ -19,6 +19,10 @@ ant_struct.TransmitAntennaArray = MergeStructs(...
 
 ant_struct.ReceiveAntennaArray = MergeStructs(...
     ant_struct.ReceiveAntennaArray,cdl_struct.ReceiveAntennaArray);
+
+cdl_struct.TransmitAntennaArray = ant_struct.TransmitAntennaArray;
+cdl_struct.ReceiveAntennaArray  = ant_struct.ReceiveAntennaArray;
+
 end
 
 function s1 = MergeStructs(s1,s2)
