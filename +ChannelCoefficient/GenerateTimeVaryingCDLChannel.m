@@ -57,7 +57,7 @@ function [timeSamp,F_cg] = getSampleTimes(cdl_struct,insize)
 
 c0 = 299792458;
 fc = cdl_struct.CarrierFrequency;
-initTime = cdl_struct.InitialTime;
+timeOffset = cdl_struct.CurrentTime;
 maxDoppler_v = cdl_struct.MaximumDopplerShift; % Hz
 if isscalar(maxDoppler_v)
     maxDoppler_v(2) = 0;
@@ -120,7 +120,7 @@ else
         timeSamp = (0:(numTimePoints-1)).'/F_cg;
     end
 
-    timeSamp = timeSamp + initTime;
+    timeSamp = timeSamp + timeOffset;
 
 end
 

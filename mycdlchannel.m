@@ -59,7 +59,8 @@ cdl.MaximumScattererSpeed = 5;
 
 %% Channel Control
 cdl.SampleRate = 30720000;
-cdl.InitialTime = 0.0; % Time offset of fading process in seconds
+cdl.InitialTime = 0.0; % Initial time offset of fading process in seconds
+cdl.CurrentTime = cdl.InitialTime; % Current time offset of fading process in seconds
 cdl.SampleDensity = 64; % Number off time samples per half wavelength
 cdl.RandomStream = 'mt19937ar with seed';
 cdl.Seed = 73;
@@ -81,7 +82,7 @@ cdl.ChannelFilter.MaxFractionalDelayError = 0.01;
 tic
 [H11,sampleTimes,cdl] = GenerateCDLChannel(cdl);
 toc
-[H12,sampleTimes,cdl] = ChannelProcess.Iterate(cdl); 
+[H12,sampleTimes,cdl] = ChannelProcess.AdvanceIteration(cdl); 
 
 % Test with input signal filtering
 % MATLAB CDL channel defaults follow 3GPP 5G NR/LTE numerology:

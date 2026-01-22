@@ -1,12 +1,6 @@
 function [Phi,cdl_struct] = GenerateInitialPhases(cdl_struct,ant_struct,info_struct)
-switch lower(cdl_struct.RandomStream)
-    case 'mt19937ar with seed'
-        randomStream = RandStream('mt19937ar',Seed=cdl_struct.Seed);
-        cdl_struct.RandomStreamObj = randomStream;
-    otherwise
-        rng(cdl.Seed)
-        cdl_struct.RandomStreamObj = [];
-end
+
+randomStream = cdl_struct.RandomStreamObj;
 
 c0 = 299792458; % Light speed
 
